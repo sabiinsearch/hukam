@@ -43,6 +43,7 @@ static int taskCore = 0;
 bool radioAvailable = false;
 bool enableRadio = true;
 bool enableWiFi = true;
+bool enableMQTT = false;
 
 unsigned long interval = 5; // the time we need to wait
 unsigned long previousMillis = 0;
@@ -62,10 +63,10 @@ char apName[] = "SB_MICRO-xxxxxxxxxxxx";
 
 bool hbLedState = LOW; // Heartbeat LED state
 
-int SW1 = 16;
-int SW2 = 17;
-int SW3 = 23;
-int SW4 = 12;
+int SW1 = 17;
+int SW2 = 16;
+int SW3 = 22;
+int SW4 = 23;
 
 int sw1Val = 0;
 int sw2Val = 0;
@@ -548,7 +549,9 @@ void publishData(String data){
      }else{
        Serial.println("Publish failed: ");
        if (!!!client.connected()) {
-         connectMQTT();
+         if (enableMQTT) {
+           connectMQTT();
+         }
        }
        // Serial.println(data);
      }
@@ -622,7 +625,7 @@ void checkSwitch(String varName, int index, int swValue){
                 sw1Val = 0;
                 swValue = 0;
               }
-              updateSwStateAndPublish(varName, index, swValue);
+              // updateSwStateAndPublish(varName, index, swValue);
           }
             lastState1 = currentState;
             break;
@@ -641,7 +644,7 @@ void checkSwitch(String varName, int index, int swValue){
                   sw2Val = 0;
                   swValue = 0;
                 }
-                updateSwStateAndPublish(varName, index, swValue);
+                // updateSwStateAndPublish(varName, index, swValue);
             }
               lastState3 = currentState;
               break;
@@ -660,7 +663,7 @@ void checkSwitch(String varName, int index, int swValue){
                   sw3Val = 0;
                   swValue = 0;
                 }
-                updateSwStateAndPublish(varName, index, swValue);
+                // updateSwStateAndPublish(varName, index, swValue);
             }
               lastState3 = currentState;
               break;
@@ -679,7 +682,7 @@ void checkSwitch(String varName, int index, int swValue){
                   sw4Val = 0;
                   swValue = 0;
                 }
-                updateSwStateAndPublish(varName, index, swValue);
+                // updateSwStateAndPublish(varName, index, swValue);
             }
               lastState4 = currentState;
               break;
@@ -691,7 +694,7 @@ void checkSwitch(String varName, int index, int swValue){
 void checkTouchDetected(){
   checkSwitch("sw1Val", 1, sw1Val);
   checkSwitch("sw2Val", 2, sw2Val);
-  // checkSwitch("sw3Val", 3, sw3Val);
+  checkSwitch("sw3Val", 3, sw3Val);
   checkSwitch("sw4Val", 4, sw4Val);
 }
 
@@ -768,8 +771,10 @@ void loop() {
 	}
 
   if (isConnected && (!!!client.connected() || !client.loop())) {
+    if(enableMQTT) {
     Serial.println("MQTT Connection Lost, RECONNECTING AGAIN.......");
     connectMQTT();
+    }
   }
 
   unsigned long currentMillis = millis();
